@@ -10,5 +10,8 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.4.1"
+  },
+  "dependencies": {
+    "openai": "^7.10.0"
   }
 }
