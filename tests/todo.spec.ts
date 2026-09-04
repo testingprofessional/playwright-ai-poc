@@ -8,9 +8,7 @@ test('user can add a todo', async ({ page }) => {
     await todoInput.fill('Learn Playwright with AI');
     await todoInput.press('Enter');
 
-    await expect(
-        page.getByText('Learn Playwright with AI')
-    ).toBeVisible();
+    await expect(page.getByText('BUG Learn Playwright BUG with AI BUG')).toBeVisible();
 });
 
 test('user can complete a todo', async ({ page }) => {
