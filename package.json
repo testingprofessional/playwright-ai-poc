@@ -3,15 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "ai-repair": "tsx scripts/ai-repair.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "@types/node": "^26.4.1"
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13"
   },
   "dependencies": {
+    "ollama": "^0.6.3",
     "openai": "^7.10.0"
   }
 }

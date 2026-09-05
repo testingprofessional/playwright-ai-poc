@@ -11,16 +11,12 @@ export default defineConfig({
 
   workers: process.env.CI ? 1 : undefined,
 
-  reporter: [
-    ['list'],
-    ['html', {
-      outputFolder: 'playwright-report',
-      open: 'never'
-    }],
-    ['junit', {
-      outputFile: 'test-results/results.xml'
-    }]
-  ],
+ reporter: [
+  ['list'],
+  ['html', { outputFolder: 'playwright-report', open: 'never' }],
+  ['junit', { outputFile: 'test-results/results.xml' }],
+  ['json', { outputFile: 'test-results/results.json' }]
+],
 
   use: {
     trace: 'retain-on-failure',

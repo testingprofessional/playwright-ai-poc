@@ -19,7 +19,7 @@ test('user can complete a todo', async ({ page }) => {
     await todoInput.fill('Learn Playwright');
     await todoInput.press('Enter');
 
-        const todo = page.getByText('Learn Playwright');
+        const todo = page.getByText('Learn Playwright FALSE');
 
     await expect(todo).toBeVisible();
 });
