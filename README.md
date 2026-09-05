@@ -1,15 +1,25 @@
 Workflow:
 
 Playwright tests uitvoeren
+
 Failure detecteren
+
 AI analyseert de failure
+
 AI classificeert de oorzaak
+
 AI maakt een repair proposal
+
 Repair wordt gevalideerd
+
 Veilige repair wordt toegepast
+
 Backup van het originele bestand maken
+
 Gerepareerde test opnieuw uitvoeren
+
 Pipeline rapporteert SUCCESS/FAILURE
+
 
 Playwright
     ↓
