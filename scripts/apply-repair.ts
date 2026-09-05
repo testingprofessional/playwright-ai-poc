@@ -59,9 +59,20 @@ const VALIDATION_FILE = path.join(
 );
 
 function normalizeCode(code: string): string {
-    return code
-        .replace(/\r\n/g, '\n')
-        .trim();
+    return code.replace(/\r\n/g, '\n');
+}
+
+function normalizeReplacementIndentation(
+    originalCode: string,
+    replacementCode: string
+): string {
+    const originalIndentation =
+        originalCode.match(/^[ \t]*/)?.[0] ?? '';
+
+    const replacementContent =
+        replacementCode.trim();
+
+    return originalIndentation + replacementContent;
 }
 
 function createBackup(filePath: string): string {
@@ -265,12 +276,23 @@ function applySingleRepair(
             normalizedOriginal
         );
 
+    const normalizedReplacement =
+        normalizeReplacementIndentation(
+            proposal.originalCode,
+            proposal.replacementCode
+        );
+
+    console.log('');
+    console.log('Normalized replacement:');
+    console.log('------------------------------------');
+    console.log(normalizedReplacement);
+
     const updatedSource =
         normalizedSource.substring(0, index) +
-        proposal.replacementCode +
+        normalizedReplacement +
         normalizedSource.substring(
             index + normalizedOriginal.length
-        );
+    );
 
     // --------------------------------------------------
     // 12. Controleer of er daadwerkelijk iets veranderd is

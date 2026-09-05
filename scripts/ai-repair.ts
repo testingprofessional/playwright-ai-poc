@@ -1,37 +1,11 @@
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { spawnSync } from 'child_process';
 
-const PROJECT_ROOT = process.cwd();
-
-const RESULTS_FILE = path.join(
-    PROJECT_ROOT,
-    'test-results',
-    'results.json'
-);
-
-const ANALYSIS_FILE = path.join(
-    PROJECT_ROOT,
-    'test-results',
-    'ai-analysis.json'
-);
-
-const PROPOSAL_FILE = path.join(
-    PROJECT_ROOT,
-    'test-results',
-    'repair-proposal.json'
-);
-
-const VALIDATION_FILE = path.join(
-    PROJECT_ROOT,
-    'test-results',
-    'repair-validation.json'
-);
-
-
-// ---------------------------------------------------------
-// Types
-// ---------------------------------------------------------
+const RESULTS_FILE = 'test-results/results.json';
+const ANALYSIS_FILE = 'test-results/ai-analysis.json';
+const PROPOSAL_FILE = 'test-results/repair-proposal.json';
+const VALIDATION_FILE = 'test-results/repair-validation.json';
 
 interface RepairProposal {
     test: string;
@@ -44,603 +18,350 @@ interface RepairProposal {
     reason: string;
 }
 
-interface RepairProposalFile {
-    proposals: RepairProposal[];
-}
-
-
-// ---------------------------------------------------------
-// Command uitvoeren
-// ---------------------------------------------------------
-
 function runCommand(
     command: string,
     args: string[],
-    description: string
+    label: string
 ): boolean {
+    console.log(`\n▶ ${label}`);
+    console.log(`$ ${command} ${args.join(' ')}`);
 
-    console.log('');
-    console.log('====================================');
-    console.log(` ${description}`);
-    console.log('====================================');
-    console.log('');
-
-    console.log(`> ${command} ${args.join(' ')}`);
-    console.log('');
-
-    const result = spawnSync(
-        command,
-        args,
-        {
-            cwd: PROJECT_ROOT,
-            stdio: 'inherit',
-            shell: true
-        }
-    );
-
-    if (result.error) {
-
-        console.error('');
-        console.error(
-            `✗ ${description} failed`
-        );
-
-        console.error(result.error);
-
-        return false;
-    }
+    const result = spawnSync(command, args, {
+        stdio: 'inherit',
+        shell: true
+    });
 
     if (result.status !== 0) {
-
-        console.log('');
-        console.log(
-            `✗ ${description} returned exit code ${result.status}`
-        );
-
+        console.error(`❌ ${label} mislukt.`);
         return false;
     }
 
-    console.log('');
-    console.log(
-        `✓ ${description} completed`
-    );
-
+    console.log(`✓ ${label} geslaagd.`);
     return true;
 }
 
-
-// ---------------------------------------------------------
-// Playwright uitvoeren
-// ---------------------------------------------------------
-
 function runPlaywright(): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 1 - Playwright tests uitvoeren');
+    console.log('====================================');
 
     return runCommand(
         'npx',
         ['playwright', 'test'],
-        'Playwright tests'
+        'Playwright test run'
     );
 }
 
-
-// ---------------------------------------------------------
-// Failed tests controleren
-// ---------------------------------------------------------
-
 function hasFailedTests(): boolean {
-
     if (!fs.existsSync(RESULTS_FILE)) {
-
-        console.log(
-            '⚠ results.json not found.'
-        );
-
+        console.error(`❌ Resultaatbestand niet gevonden: ${RESULTS_FILE}`);
         return false;
     }
 
     const results = JSON.parse(
-        fs.readFileSync(
-            RESULTS_FILE,
-            'utf-8'
-        )
+        fs.readFileSync(RESULTS_FILE, 'utf-8')
     );
 
     let failedTests = 0;
 
-    for (
-        const suite of results.suites ?? []
-    ) {
-
-        for (
-            const spec of suite.specs ?? []
-        ) {
-
+    for (const suite of results.suites || []) {
+        for (const spec of suite.specs || []) {
             if (spec.ok === false) {
                 failedTests++;
             }
         }
     }
 
-    console.log('');
-    console.log(
-        `Aantal failed tests gevonden: ${failedTests}`
-    );
+    console.log(`\nAantal gefaalde tests: ${failedTests}`);
 
     return failedTests > 0;
 }
 
-
-// ---------------------------------------------------------
-// Bestand controleren
-// ---------------------------------------------------------
-
-function fileExists(
-    filePath: string,
-    description: string
-): boolean {
-
-    if (!fs.existsSync(filePath)) {
-
-        console.error('');
-        console.error(
-            `✗ ${description} niet gevonden:`
-        );
-
-        console.error(filePath);
-
-        return false;
-    }
-
-    console.log(
-        `✓ ${description} gevonden`
-    );
-
-    return true;
-}
-
-
-// ---------------------------------------------------------
-// AI Failure Analyzer
-// ---------------------------------------------------------
-
 function runAnalyzer(): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 2 - AI failure analyse');
+    console.log('====================================');
 
     const success = runCommand(
         'npx',
         ['tsx', 'scripts/analyze-failure.ts'],
-        'AI Failure Analyzer'
+        'AI failure analyse'
     );
 
     if (!success) {
         return false;
     }
 
-    console.log('');
-
-    return fileExists(
-        ANALYSIS_FILE,
-        'ai-analysis.json'
-    );
-}
-
-
-// ---------------------------------------------------------
-// AI Repair Analyzer
-// ---------------------------------------------------------
-
-function runRepairAnalyzer(): boolean {
-
-    const success = runCommand(
-        'npx',
-        ['tsx', 'scripts/repair-failure.ts'],
-        'AI Repair Analyzer'
-    );
-
-    if (!success) {
+    if (!fs.existsSync(ANALYSIS_FILE)) {
+        console.error(
+            `❌ AI analysebestand niet gevonden: ${ANALYSIS_FILE}`
+        );
         return false;
     }
 
-    console.log('');
-
-    return fileExists(
-        PROPOSAL_FILE,
-        'repair-proposal.json'
-    );
-}
-
-
-// ---------------------------------------------------------
-// Repair Validator
-// ---------------------------------------------------------
-
-function runValidator(): boolean {
-
-    const success = runCommand(
-        'npx',
-        ['tsx', 'scripts/validate-repair.ts'],
-        'Repair Validator'
-    );
-
-    if (!success) {
-        return false;
-    }
-
-    console.log('');
-
-    return fileExists(
-        VALIDATION_FILE,
-        'repair-validation.json'
-    );
-}
-
-
-// ---------------------------------------------------------
-// Repair toepassen
-// ---------------------------------------------------------
-
-function runApplyRepair(): boolean {
-
-    return runCommand(
-        'npx',
-        ['tsx', 'scripts/apply-repair.ts'],
-        'Apply Repair'
-    );
-}
-
-
-// ---------------------------------------------------------
-// Gerepareerde tests ophalen
-// ---------------------------------------------------------
-
-function getRepairedTests(): string[] {
-
-    if (!fs.existsSync(PROPOSAL_FILE)) {
-        return [];
-    }
-
-    const proposalData: RepairProposalFile =
-        JSON.parse(
-            fs.readFileSync(
-                PROPOSAL_FILE,
-                'utf-8'
-            )
-        );
-
-    if (
-        !proposalData.proposals ||
-        !Array.isArray(proposalData.proposals)
-    ) {
-        return [];
-    }
-
-    const tests =
-        proposalData.proposals
-            .filter(
-                proposal =>
-                    proposal.repairPossible &&
-                    proposal.classification ===
-                        'TEST_DEFECT'
-            )
-            .map(
-                proposal =>
-                    proposal.test
-            );
-
-    return [
-        ...new Set(tests)
-    ];
-}
-
-
-// ---------------------------------------------------------
-// Gerepareerde tests opnieuw uitvoeren
-// ---------------------------------------------------------
-
-function runRepairedTests(): boolean {
-
-    const repairedTests =
-        getRepairedTests();
-
-    if (
-        repairedTests.length === 0
-    ) {
-
-        console.log('');
-
-        console.log(
-            'Geen gerepareerde tests gevonden.'
-        );
-
-        return false;
-    }
-
-    console.log('');
-    console.log('====================================');
-    console.log(' Re-run repaired tests');
-    console.log('====================================');
-    console.log('');
-
-    console.log(
-        `Aantal gerepareerde tests: ${repairedTests.length}`
-    );
-
-    for (
-        const test of repairedTests
-    ) {
-
-        console.log(
-            `  → ${test}`
-        );
-    }
-
-    console.log('');
-
-
-    // -----------------------------------------------------
-    // Iedere gerepareerde test afzonderlijk uitvoeren
-    // -----------------------------------------------------
-
-    for (
-        const test of repairedTests
-    ) {
-
-        console.log('');
-        console.log(
-            `Test opnieuw uitvoeren: ${test}`
-        );
-
-        console.log('');
-
-        const result = spawnSync(
-            'npx',
-            [
-                'playwright',
-                'test',
-                '--grep',
-                test
-            ],
-            {
-                cwd: PROJECT_ROOT,
-                stdio: 'inherit',
-                shell: true
-            }
-        );
-
-        if (
-            result.error
-        ) {
-
-            console.log('');
-            console.log(
-                `✗ Fout tijdens uitvoeren van: ${test}`
-            );
-
-            console.log(
-                result.error
-            );
-
-            return false;
-        }
-
-        if (
-            result.status !== 0
-        ) {
-
-            console.log('');
-            console.log(
-                `✗ Gerepareerde test is nog steeds FAILED: ${test}`
-            );
-
-            return false;
-        }
-
-        console.log('');
-        console.log(
-            `✓ Gerepareerde test passed: ${test}`
-        );
-    }
+    console.log(`✓ Analysebestand gevonden: ${ANALYSIS_FILE}`);
 
     return true;
 }
 
-
-// ---------------------------------------------------------
-// Eindresultaat tonen
-// ---------------------------------------------------------
-
-function printFinalResult(
-    success: boolean
-) {
-
-    console.log('');
-    console.log('');
+function runRepairAnalyzer(): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 3 - AI repair voorstellen');
     console.log('====================================');
-    console.log(' AI Repair Pipeline');
-    console.log('====================================');
-    console.log('');
 
-    if (success) {
-
-        console.log(
-            '🎉 SUCCESS'
-        );
-
-        console.log('');
-
-        console.log(
-            'Failures zijn automatisch geanalyseerd,'
-        );
-
-        console.log(
-            'gevalideerd, gerepareerd en opnieuw getest.'
-        );
-
-    } else {
-
-        console.log(
-            '❌ PIPELINE FAILED'
-        );
-
-        console.log('');
-
-        console.log(
-            'Niet alle stappen konden succesvol worden afgerond.'
-        );
-    }
-
-    console.log('');
-    console.log('====================================');
-    console.log('');
-}
-
-
-// ---------------------------------------------------------
-// Main
-// ---------------------------------------------------------
-
-function main() {
-
-    console.log('');
-    console.log('====================================');
-    console.log(' Playwright AI Repair Pipeline');
-    console.log('====================================');
-    console.log('');
-
-    console.log(
-        'Start volledige AI repair workflow...'
+    const success = runCommand(
+        'npx',
+        ['tsx', 'scripts/repair-failure.ts'],
+        'AI repair analyse'
     );
 
-    console.log('');
+    if (!success) {
+        return false;
+    }
 
+    if (!fs.existsSync(PROPOSAL_FILE)) {
+        console.error(
+            `❌ Repair proposal bestand niet gevonden: ${PROPOSAL_FILE}`
+        );
+        return false;
+    }
 
-    // -----------------------------------------------------
-    // STEP 1
-    // Initial Playwright run
-    // -----------------------------------------------------
+    console.log(
+        `✓ Repair proposal bestand gevonden: ${PROPOSAL_FILE}`
+    );
 
-    runPlaywright();
+    return true;
+}
 
-    /*
-     * Playwright mag hier falen.
-     *
-     * Een failure is juist de aanleiding
-     * voor onze AI repair workflow.
-     */
+function runValidator(): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 4 - Repair voorstellen valideren');
+    console.log('====================================');
 
-    const failures =
-        hasFailedTests();
+    const success = runCommand(
+        'npx',
+        ['tsx', 'scripts/validate-repair.ts'],
+        'Repair validatie'
+    );
 
+    if (!success) {
+        return false;
+    }
 
-    // -----------------------------------------------------
-    // Geen failures
-    // -----------------------------------------------------
+    if (!fs.existsSync(VALIDATION_FILE)) {
+        console.error(
+            `❌ Validatiebestand niet gevonden: ${VALIDATION_FILE}`
+        );
+        return false;
+    }
 
-    if (!failures) {
+    console.log(
+        `✓ Validatiebestand gevonden: ${VALIDATION_FILE}`
+    );
 
-        console.log('');
+    return true;
+}
 
-        console.log(
-            '✓ Alle Playwright tests zijn al groen.'
+function runApplyRepair(): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 5 - Veilige repairs toepassen');
+    console.log('====================================');
+
+    return runCommand(
+        'npx',
+        ['tsx', 'scripts/apply-repair.ts'],
+        'Repairs toepassen'
+    );
+}
+
+function getRepairedTests(): {
+    test: string;
+    file: string;
+    line: number;
+}[] {
+    if (!fs.existsSync(PROPOSAL_FILE)) {
+        return [];
+    }
+
+    const proposal = JSON.parse(
+        fs.readFileSync(PROPOSAL_FILE, 'utf-8')
+    );
+
+    return (proposal.proposals || [])
+        .filter(
+            (proposal: RepairProposal) =>
+                proposal.repairPossible === true &&
+                proposal.classification === 'TEST_DEFECT'
+        )
+        .map((proposal: RepairProposal) => ({
+            test: proposal.test,
+            file: proposal.file,
+            line: proposal.line
+        }));
+}
+
+function runRepairedTests(
+    repairedTests: {
+        test: string;
+        file: string;
+        line: number;
+    }[]
+): boolean {
+    console.log('\n====================================');
+    console.log(' Stap 6 - Gerepareerde tests opnieuw uitvoeren');
+    console.log('====================================');
+
+    let allPassed = true;
+
+    for (const repairedTest of repairedTests) {
+        const testName = repairedTest.test;
+        const file = repairedTest.file.replace(/\\/g, '/');
+        const line = repairedTest.line;
+
+        console.log(`\nTest opnieuw uitvoeren: ${testName}`);
+        console.log(`Bestand: ${file}`);
+        console.log(`Regel repair: ${line}`);
+        console.log(`Grep: ${testName}`);
+
+        const result = spawnSync(
+            'npx.cmd',
+            [
+                'playwright',
+                'test',
+                file,
+                '--grep',
+                testName
+            ],
+            {
+                stdio: 'inherit',
+                shell: false
+            }
         );
 
-        printFinalResult(true);
+        if (result.status !== 0) {
+            console.log(`❌ Test gefaald: ${testName}`);
+            allPassed = false;
+        } else {
+            console.log(`✓ Test geslaagd: ${testName}`);
+        }
+    }
 
+    return allPassed;
+}
+
+function main(): void {
+    console.log('\n====================================');
+    console.log(' AI Repair Pipeline');
+    console.log('====================================');
+
+    // --------------------------------------------------
+    // Stap 1: originele tests uitvoeren
+    // --------------------------------------------------
+
+    const initialRunPassed = runPlaywright();
+
+    /*
+     * Een failure in de eerste Playwright run is hier
+     * geen pipeline failure. Het is juist de trigger
+     * voor de AI repair workflow.
+     */
+    if (initialRunPassed) {
+        console.log('\n🎉 SUCCESS');
+        console.log('Alle Playwright tests zijn al geslaagd.');
+        console.log('\n====================================');
         return;
     }
 
+    // --------------------------------------------------
+    // Controleren of er daadwerkelijk failures zijn
+    // --------------------------------------------------
 
-    console.log('');
+    if (!hasFailedTests()) {
+        console.log('\n⚠️ Playwright gaf een foutmelding, maar er');
+        console.log('zijn geen gefaalde tests gevonden.');
+        process.exit(1);
+    }
+
+    // --------------------------------------------------
+    // Stap 2: failures analyseren
+    // --------------------------------------------------
+
+    if (!runAnalyzer()) {
+        process.exit(1);
+    }
+
+    // --------------------------------------------------
+    // Stap 3: repair voorstellen genereren
+    // --------------------------------------------------
+
+    if (!runRepairAnalyzer()) {
+        process.exit(1);
+    }
+
+    // --------------------------------------------------
+    // Stap 4: repair voorstellen valideren
+    // --------------------------------------------------
+
+    if (!runValidator()) {
+        process.exit(1);
+    }
+
+    // --------------------------------------------------
+    // Stap 5: gevalideerde repairs toepassen
+    // --------------------------------------------------
+
+    if (!runApplyRepair()) {
+        process.exit(1);
+    }
+
+    // --------------------------------------------------
+    // Stap 6: alleen gerepareerde tests opnieuw uitvoeren
+    // --------------------------------------------------
+
+    const repairedTests = getRepairedTests();
+
+    if (repairedTests.length === 0) {
+        console.log('\n⚠️ Geen gerepareerde tests gevonden.');
+        process.exit(1);
+    }
 
     console.log(
-        '⚠ Playwright heeft failures gevonden.'
+        `\nAantal gerepareerde tests: ${repairedTests.length}`
     );
 
+    const repairedTestsPassed = runRepairedTests(repairedTests);
 
-    // -----------------------------------------------------
-    // STEP 2
-    // AI Failure Analysis
-    // -----------------------------------------------------
+    // --------------------------------------------------
+    // Eindresultaat
+    // --------------------------------------------------
 
-    if (
-        !runAnalyzer()
-    ) {
+    console.log('\n====================================');
 
-        printFinalResult(false);
-
-        process.exit(1);
-    }
-
-
-    // -----------------------------------------------------
-    // STEP 3
-    // AI Repair Analysis
-    // -----------------------------------------------------
-
-    if (
-        !runRepairAnalyzer()
-    ) {
-
-        printFinalResult(false);
+    if (!repairedTestsPassed) {
+        console.log(' ❌ FAILURE');
+        console.log('');
+        console.log(
+            'De voorgestelde repairs zijn toegepast,'
+        );
+        console.log(
+            'maar één of meer gerepareerde tests falen nog steeds.'
+        );
+        console.log('====================================');
 
         process.exit(1);
     }
 
-
-    // -----------------------------------------------------
-    // STEP 4
-    // Deterministic validation
-    // -----------------------------------------------------
-
-    if (
-        !runValidator()
-    ) {
-
-        printFinalResult(false);
-
-        process.exit(1);
-    }
-
-
-    // -----------------------------------------------------
-    // STEP 5
-    // Apply safe repairs
-    // -----------------------------------------------------
-
-    if (
-        !runApplyRepair()
-    ) {
-
-        printFinalResult(false);
-
-        process.exit(1);
-    }
-
-
-    // -----------------------------------------------------
-    // STEP 6
-    // Re-run repaired tests
-    // -----------------------------------------------------
-
-    if (
-        !runRepairedTests()
-    ) {
-
-        printFinalResult(false);
-
-        process.exit(1);
-    }
-
-
-    // -----------------------------------------------------
-    // SUCCESS
-    // -----------------------------------------------------
-
-    printFinalResult(true);
+    console.log(' 🎉 SUCCESS');
+    console.log('');
+    console.log(
+        'Failures zijn automatisch geanalyseerd,'
+    );
+    console.log(
+        'gevalideerd, gerepareerd en opnieuw getest.'
+    );
+    console.log('');
+    console.log('====================================');
 }
 
-
-// ---------------------------------------------------------
-// Start
-// ---------------------------------------------------------
-
 main();
+
