@@ -1,0 +1,92 @@
+import { test, expect } from '@playwright/test';
+
+async function addTodo(page: any, text: string) {
+  const todoInput = page.getByPlaceholder('What needs to be done?');
+  await expect(todoInput).toBeVisible();
+  await todoInput.fill(text);
+  await todoInput.press('Enter');
+}
+
+test('allows a user to add multiple todo items', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  await addTodo(page, 'Buy milk');
+  await addTodo(page, 'Write Playwright tests');
+
+  const firstTodo = page.locator('.todo-list li').filter({ hasText: 'Buy XXX milk' });
+  const secondTodo = page.locator('.todo-list li').filter({ hasText: 'Write Playwright tests' });
+
+  await expect(firstTodo).toBeVisible();
+  await expect(secondTodo).toBeVisible();
+  await expect(page.getByText('2 items left')).toBeVisible();
+});
+
+test('allows a user to complete a todo and clear completed items', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  await addTodo(page, 'Pay rent');
+  await addTodo(page, 'Book flight');
+
+  const rentTodo = page.locator('.todo-list li').filter({ hasText: 'Pay rent' });
+  await rentTodo.locator('.toggle').check();
+  await expect(rentTodo.locator('.toggle')).toBeChecked();
+
+  await page.getByRole('button', { name: 'Clear completed' }).click();
+
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Pay rent' })).toHaveCount(0);
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Book flight' })).toBeVisible();
+  await expect(page.getByText('1 item left')).toBeVisible();
+});
+
+test('allows a user to edit an existing todo item', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  await addTodo(page, 'Learn TypeScript');
+
+  const todoItem = page.locator('.todo-list li').filter({ hasText: 'Learn TypeScript' });
+  await expect(todoItem).toBeVisible();
+
+  await todoItem.dblclick();
+  const editor = page.locator('.todo-list li.editing .edit');
+  await expect(editor).toBeVisible();
+  await editor.fill('Learn Playwright');
+  await editor.press('Enter');
+
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Learn Playwright' })).toBeVisible();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Learn TypeScript' })).toHaveCount(0);
+});
+
+test('does not add a todo when the input value is empty or whitespace', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  const todoInput = page.getByPlaceholder('What needs to be done?');
+  await expect(todoInput).toBeVisible();
+
+  await todoInput.fill('   ');
+  await todoInput.press('Enter');
+
+  await expect(page.locator('.todo-list li')).toHaveCount(0);
+  await expect(page.locator('.footer')).not.toBeVisible();
+});
+
+test('filters the todo list by all, active, and completed items', async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc/');
+
+  await addTodo(page, 'Clean garage');
+  await addTodo(page, 'Buy groceries');
+
+  const cleanGarageTodo = page.locator('.todo-list li').filter({ hasText: 'Clean garage' });
+  await cleanGarageTodo.locator('.toggle').check();
+
+  await page.getByRole('link', { name: 'Active' }).click();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Clean garage' })).toHaveCount(0);
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Buy groceries' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Completed' }).click();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Clean garage' })).toBeVisible();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Buy groceries' })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'All' }).click();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Clean garage' })).toBeVisible();
+  await expect(page.locator('.todo-list li').filter({ hasText: 'Buy groceries' })).toBeVisible();
+});
