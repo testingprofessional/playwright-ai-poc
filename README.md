@@ -29,11 +29,12 @@ Workflow:
           ↓
 
    Repair Proposal
+   
           ↓
 
    Deterministische
    Repair Validation
-   
+
           ↓
       Veilig?
        /    \
