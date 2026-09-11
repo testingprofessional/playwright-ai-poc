@@ -25,11 +25,15 @@ Workflow:
           │               │               │
           ↓               └──────→ STOP
    Repair Candidate
+
           ↓
+
    Repair Proposal
           ↓
+
    Deterministische
    Repair Validation
+   
           ↓
       Veilig?
        /    \
@@ -49,7 +53,7 @@ Workflow:
         │           │
         ↓           ↓
      SUCCESS      FAILURE
-     
+
 
 Het idee achter deze setup:
 Ik zou AI niet onbeperkt toegang geven tot de testcode. Ik zou AI eerst gebruiken om een failure te analyseren en een concrete repair proposal te genereren. Vervolgens laat ik een deterministische validator controleren of de voorgestelde wijziging daadwerkelijk overeenkomt met de huidige broncode en of de wijziging minimaal is. Alleen veilige wijzigingen worden toegepast, waarbij eerst een backup wordt gemaakt. Daarna worden de gerepareerde tests opnieuw uitgevoerd om te verifiëren dat de repair daadwerkelijk werkt.
