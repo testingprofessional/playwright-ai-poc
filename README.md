@@ -163,8 +163,8 @@ Privacy: Je gegevens en prompts blijven op je eigen computer staan en worden nie
 
 Geen internet nodig: Je kunt de AI-modellen volledig offline gebruiken nadat je ze hebt gedownload.
 
-Geen kosten: Er zijn geen abonnementen of betalingen per gebruik (API-calls) nodig.Eenvoud: 
+Geen kosten: Er zijn geen abonnementen of betalingen per gebruik (API-calls) nodig.
 
-Het vereenvoudigt het installeren en beheren van complexe AI-modellen flink via een duidelijke command-line-workflow
+Eenvoud: Het vereenvoudigt het installeren en beheren van complexe AI-modellen flink via een duidelijke command-line-workflow
 
 Ollama lokaal opstarten: ollama run qwen3:8b-q4_K_M
