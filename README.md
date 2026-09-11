@@ -21,45 +21,96 @@ Gerepareerde test opnieuw uitvoeren
 Pipeline rapporteert SUCCESS/FAILURE
 
 
+Uitvoering:
+
 Playwright
+
     ↓
+
 2 failures gedetecteerd
+
     ↓
+
 AI Failure Analyzer
+
     ↓
+
 2 × TEST_DEFECT
+
     ↓
+
 AI Repair Analyzer
+
     ↓
+
 2 repair proposals
+
     ↓
+
 Deterministische Validator
+
     ---->   AI
+
             ↓
+
             "Ik denk dat dit de oplossing is"
+
             ↓
+
             repair-proposal.json
+
             ↓
+
             Validator
+
             ↓
+
             "Is dit veilig?"
+
+            - bestand bestaat
+
+            - originele code gevonden
+
+            - replacement geldig
+
+            - regelnummers plausibel
+
+            - wijziging minimaal
+
             ↓
+
             JA
+
             ↓
+
             apply-repair.ts
+
             ↓
+
             testbestand aanpassen
+
     ↓
+
 2 × SAFE TO APPLY
+
     ↓
+
 Backup maken
+
     ↓
+
 2 repairs toepassen
+
     ↓
+
 Re-run
+
     ↓
+
 2 tests passed
+
     ↓
+    
 🎉 SUCCESS
 
 
