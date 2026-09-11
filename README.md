@@ -1,156 +1,55 @@
 Workflow:
 
-Playwright tests uitvoeren
-
-Failure detecteren
-
-AI analyseert de failure
-
-AI classificeert de oorzaak
-
-AI maakt een repair proposal
-
-Repair wordt gevalideerd
-
-Veilige repair wordt toegepast
-
-Backup van het originele bestand maken
-
-Gerepareerde test opnieuw uitvoeren
-
-Pipeline rapporteert SUCCESS/FAILURE
-
-
-Uitvoering:
-
-Playwright
-
-    ↓
-
-2 failures gedetecteerd
-
-    ↓
-
-AI Failure Analyzer
-
-    ↓
-
-2 × TEST_DEFECT
-
-    ↓
-
-AI Repair Analyzer
-
-    ↓
-
-2 repair proposals
-
-    ↓
-
-Deterministische Validator
-
-    ---->   AI
-
-            ↓
-
-            "Ik denk dat dit de oplossing is"
-
-            ↓
-
-            repair-proposal.json
-
-            ↓
-
-            Validator
-
-            ↓
-
-            "Is dit veilig?"
-
-            - bestand bestaat
-
-            - originele code gevonden
-
-            - replacement geldig
-
-            - regelnummers plausibel
-
-            - wijziging minimaal
-
-            ↓
-
-            JA
-
-            ↓
-
-            apply-repair.ts
-
-            ↓
-
-            testbestand aanpassen
-
-    ↓
-
-2 × SAFE TO APPLY
-
-    ↓
-
-Backup maken
-
-    ↓
-
-2 repairs toepassen
-
-    ↓
-
-Re-run
-
-    ↓
-
-2 tests passed
-
-    ↓
-
-🎉 SUCCESS
-
-
-                PLAYWRIGHT
-                    │
-                    ▼
-              Test uitvoeren
-                    │
-             ┌──────┴──────┐
-             │             │
-           PASS          FAIL
-             │             │
-           Klaar           ▼
-                     AI analyse
-                          │
-                          ▼
-                     Classificatie
-                          │
-                          ▼
-                    Repair proposal
-                          │
-                          ▼
-                      Validation
-                          │
-                    ┌─────┴─────┐
-                    │           │
-                   NO          YES
-                    │           │
-                 Stop           ▼
-                            Apply repair
-                                │
-                                ▼
-                         Test opnieuw
-                                │
-                         ┌──────┴──────┐
-                         │             │
-                       PASS          FAIL
-                         │             │
-                       Klaar       Reparatie
-                                    mislukt
+                 START
+                   │
+          ┌────────┴────────┐
+          │                 │
+     Handmatig          Pipeline
+          │                 │
+          └────────┬────────┘
+                   ↓
+          Playwright tests
+                   ↓
+             Alles groen?
+              /         \
+            JA           NEE
+            │             │
+            ↓             ↓
+          KLAAR      Failure Analysis
+                          ↓
+                  Wat is de oorzaak?
+                          ↓
+          ┌───────────────┼───────────────┐
+          │               │               │
+     TEST_DEFECT     APP/ENV/FLAKY      UNKNOWN
+          │               │               │
+          ↓               └──────→ STOP
+   Repair Candidate
+          ↓
+   Repair Proposal
+          ↓
+   Deterministische
+   Repair Validation
+          ↓
+      Veilig?
+       /    \
+     NEE     JA
+     │        │
+    STOP      ↓
+         Backup maken
+              ↓
+        Repair toepassen
+              ↓
+       Gerepareerde test
+          opnieuw draaien
+              ↓
+           Passed?
+          /       \
+        JA         NEE
+        │           │
+        ↓           ↓
+     SUCCESS      FAILURE
+     
 
 Het idee achter deze setup:
 Ik zou AI niet onbeperkt toegang geven tot de testcode. Ik zou AI eerst gebruiken om een failure te analyseren en een concrete repair proposal te genereren. Vervolgens laat ik een deterministische validator controleren of de voorgestelde wijziging daadwerkelijk overeenkomt met de huidige broncode en of de wijziging minimaal is. Alleen veilige wijzigingen worden toegepast, waarbij eerst een backup wordt gemaakt. Daarna worden de gerepareerde tests opnieuw uitgevoerd om te verifiëren dat de repair daadwerkelijk werkt.
