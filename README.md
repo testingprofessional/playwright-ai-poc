@@ -57,6 +57,9 @@ Workflow:
 
 Example run:
 
+Ollama lokaal opstarten: ollama run qwen3:8b-q4_K_M
+Check: http://localhost:11434
+
 PS C:\Projecten\playwright-ai-poc\playwright-ai-poc> npm run ai-repair                          
                                 
 > playwright-ai-poc@1.0.0 ai-repair
@@ -367,3 +370,4 @@ Geen kosten: Er zijn geen abonnementen of betalingen per gebruik (API-calls) nod
 Eenvoud: Het vereenvoudigt het installeren en beheren van complexe AI-modellen flink via een duidelijke command-line-workflow
 
 Ollama lokaal opstarten: ollama run qwen3:8b-q4_K_M
+Check: http://localhost:11434
